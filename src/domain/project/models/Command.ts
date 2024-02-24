@@ -1,15 +1,18 @@
 export type HealthcheckCommand = {
   type: 'healthcheck',
   cron: string,
-  command: string,
-  args?: string[],
   expect: string,
 };
 
 export type StartCommand = {
-  name: string,
-  command: string,
-  args?: string[],
+  type: 'start',
 };
 
-export type Command = HealthcheckCommand | StartCommand;
+export type BaseCommand = {
+  command: string | string[],
+};
+
+export type Command = BaseCommand & (
+  HealthcheckCommand
+  | StartCommand
+);
