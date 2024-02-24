@@ -43,9 +43,19 @@ const ProjectCard = ({
         {size(project.projects)}
       </CardContent>
       <CardActions>
-        <Button variant="contained" onClick={startCmd.start}>
-          Start
-        </Button>
+        {
+          startCmd.state === 'started'
+            ? (
+              <Button variant="contained" onClick={startCmd.stop} color="error">
+                Stop
+              </Button>
+            )
+            : (
+              <Button variant="contained" onClick={startCmd.start}>
+                Start
+              </Button>
+            )
+          }
       </CardActions>
     </Card>
   );

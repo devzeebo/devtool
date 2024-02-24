@@ -10,9 +10,10 @@ export type StartCommand = {
 
 export type BaseCommand = {
   command: string | string[],
+  workingDirectory?: string,
 };
 
-export type Command = BaseCommand & (
+export type ProjectCommand = BaseCommand & (
   HealthcheckCommand
   | StartCommand
 );

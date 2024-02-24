@@ -3,7 +3,7 @@
   projects: [
     {
       name: 'server',
-      workingDirectory: './server',
+      workingDirectory: 'server',
       commands: [
         {
           type: 'start',
@@ -35,7 +35,7 @@
     },
     {
       name: 'ui',
-      workingDirectory: './ui',
+      workingDirectory: 'ui',
       commands: [
         {
           type: 'start',

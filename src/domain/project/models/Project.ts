@@ -1,9 +1,10 @@
-import type { Command } from './Command';
+import type { ProjectCommand } from './Command';
 
 export type Project = {
   name: string,
+  workingDirectory: string,
 
-  commands: Command[],
+  commands: ProjectCommand[],
 
   projects: Project[],
 };

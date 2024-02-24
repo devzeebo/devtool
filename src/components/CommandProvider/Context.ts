@@ -3,7 +3,7 @@ import {
 } from 'react';
 import { constant, isString, noop } from 'lodash/fp';
 import type { Command as TauriCommand, TerminatedPayload } from '@tauri-apps/plugin-shell';
-import type { Command } from '../../domain/project/models/Command';
+import type { ProjectCommand } from '../../domain/project/models/Command';
 import type { Project } from '../../domain/project/models/Project';
 
 type StartedInfo = {
@@ -71,7 +71,7 @@ export default Context;
 
 export const useCommand = (
   project: string | Project,
-  type: Command['type'],
+  type: ProjectCommand['type'],
 ): CommandHook => {
   const projectPath = isString(project) ? project : project.name;
   const path = `${projectPath}:${type}`;

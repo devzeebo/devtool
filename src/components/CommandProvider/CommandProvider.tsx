@@ -16,42 +16,45 @@ import {
   keyBy,
   map,
   mapValues,
+  tap,
   toPairs,
 } from 'lodash/fp';
 import { Command as TauriCommand } from '@tauri-apps/plugin-shell';
-import { mapAsync, withKey } from 'moredash';
+import { mapAsync } from 'moredash';
+import { resolve } from '@tauri-apps/api/path';
 import type {
   Action, CommandCache, CommandCacheMap, Dispatch,
 } from './Context';
 import Context from './Context';
 import type { Project } from '../../domain/project/models/Project';
-import type { Command } from '../../domain/project/models/Command';
+import type { ProjectCommand } from '../../domain/project/models/Command';
 import { useProject } from '../ProjectProvider';
 
 export type CommandProviderProps = PropsWithChildren<{}>;
 
 const hashCommand = (
   path: string,
-  command: Command,
+  command: ProjectCommand,
 ) => `${path}:${JSON.stringify(command)}`;
 
-const buildCommand = (
+const buildCommand = async (
   path: string,
-  cmd: Command,
-): CommandCache => {
+  cwd: string,
+  cmd: ProjectCommand,
+): Promise<CommandCache> => {
   const cmdBits = castArray(cmd.command);
+
+  console.log(cwd, cmd.workingDirectory);
 
   const tauriCmd = TauriCommand.create(
     cmdBits[0],
     drop(1, cmdBits),
-    { cwd: '../example/server' },
+    { cwd: await resolve(cwd, cmd.workingDirectory ?? '.') },
   );
 
   tauriCmd.on('error', console.error);
   tauriCmd.stdout.on('data', console.log);
   tauriCmd.stderr.on('data', console.warn);
-
-  console.log({ tauriCmd });
 
   return {
     hash: hashCommand(path, cmd),
@@ -64,22 +67,36 @@ const buildCommand = (
 };
 
 type NewCommandList = Record<string, CommandCache>;
-const getCommandList = (
+const getCommandList = async (
+  cwd: string,
   projects: Project[],
-): NewCommandList => (
-  flow(
-    map((p: Project) => flow(
-      keyBy((c: Command) => `${p.name}:${c.type}`),
-      toPairs,
-    )(p.commands)),
-    flatten,
-    fromPairs,
-    withKey(mapValues)((
-      c: Command,
-      path: string,
-    ) => buildCommand(path, c)),
-  )(projects) as any
-);
+): Promise<NewCommandList> => {
+  const allCommands = (
+    flow(
+      map((p: Project) => flow(
+        keyBy((c: ProjectCommand) => `${p.name}:${c.type}`),
+        tap(console.log),
+        mapValues((c: ProjectCommand) => ({
+          ...c,
+          workingDirectory: c.workingDirectory ?? p.workingDirectory ?? '.',
+        })),
+        tap(console.log),
+        toPairs,
+      )(p.commands)),
+      flatten,
+    )(projects) as any
+  );
+
+  const compiledCommands = await mapAsync(
+    async ([path, c]: [string, ProjectCommand]): Promise<[string, CommandCache]> => [
+      path,
+      await buildCommand(path, cwd, c),
+    ],
+    allCommands,
+  );
+
+  return fromPairs(compiledCommands);
+};
 
 const reducer = async (current: CommandCacheMap, action: Action) => {
   const newMap = {
@@ -145,9 +162,16 @@ const CommandProvider = ({
 
   useEffect(
     () => {
-      const newCommands = getCommandList(rootProject?.projects ?? []);
+      if (!rootProject?.projects) {
+        return;
+      }
 
       (async () => {
+        const newCommands = await getCommandList(
+          rootProject.workingDirectory,
+          rootProject.projects,
+        );
+
         const pairs = toPairs(newCommands);
         await mapAsync(
           ([path, cmd]) => dispatch({
@@ -159,7 +183,7 @@ const CommandProvider = ({
         );
       })();
     },
-    [dispatch, rootProject?.projects],
+    [dispatch, rootProject?.workingDirectory, rootProject?.projects],
   );
 
   const value = useMemo(

@@ -4,10 +4,9 @@ import {
   useCallback,
   useMemo,
 } from 'react';
-import JSON5 from 'json5';
-import { readTextFile } from '@tauri-apps/plugin-fs';
 import type { Project } from '../../domain/project/models/Project';
 import Context from './Context';
+import { loadProjectFile } from '../../domain/project/operations/loadProjectFile';
 
 export type ProjectProviderProps = PropsWithChildren<{}>;
 
@@ -19,9 +18,7 @@ const ProjectProvider = ({
   const loadProject = useCallback(
     async () => {
       setProject(
-        JSON5.parse<Project>(
-          await readTextFile('/home/devzeebo/git/personal/devtool/example/example-project.devtool'),
-        ),
+        await loadProjectFile('/home/devzeebo/git/personal/devtool/example/example-project.devtool'),
       );
     },
     [],
