@@ -1,0 +1,36 @@
+{
+  "name": "devtool",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.3",
+    "@emotion/styled": "^11.11.0",
+    "@mui/material": "^5.15.10",
+    "@react-shanties/core": "^0.0.11",
+    "@tauri-apps/api": "^2.0.0-beta.0",
+    "@tauri-apps/plugin-fs": "^2.0.0-beta.1",
+    "@tauri-apps/plugin-shell": "^2.0.0-beta.0",
+    "json5": "^2.2.3",
+    "lodash": "^4.17.21",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.1"
+  },
+  "devDependencies": {
+    "@react-ddd/eslint-config": "^0.4.0",
+    "@tauri-apps/cli": "^2.0.0-beta.0",
+    "@types/lodash": "^4.14.202",
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.0.2",
+    "vite": "^5.0.0"
+  }
+}

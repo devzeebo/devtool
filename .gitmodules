@@ -1,0 +1,3 @@
+[submodule "plugins/tauri-plugin-shell"]
+	path = plugins/tauri-plugin-shell
+	url = git@github.com:devzeebo/tauri-plugin-shell.git

@@ -1,0 +1,49 @@
+{
+  name: 'example',
+  projects: [
+    {
+      name: 'server',
+      workingDirectory: './server',
+      commands: [
+        {
+          type: 'start',
+          command: 'node',
+          args: ['./src/index.js']
+        },
+        {
+          type: 'healthcheck',
+          // shell: 'curl -Is http://localhost:2000/healthcheck | head -n 1',
+          command: 'curl',
+          args: ['-Is', 'http://localhost:2000/healthcheck'],
+          cron: '* * * * * *', // every second
+          expect: 'HTTP/1.1 200 OK'
+        }
+      ],
+    },
+    {
+      name: 'mongo',
+      commands: [
+        {
+          type: 'start',
+          shell: 'docker compose up'
+        },
+        {
+          type: 'healthcheck',
+          shell: 'docker compose exec mongo mongo --eval \'db.runCommand("ping").ok\' --quiet',
+          cron: '* * * * * *', // every second
+          expect: '1'
+        }
+      ]
+    },
+    {
+      name: 'ui',
+      workingDirectory: './ui',
+      commands: [
+        {
+          type: 'start',
+          shell: 'npm start'
+        }
+      ]
+    }
+  ]
+}

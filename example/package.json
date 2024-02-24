@@ -1,0 +1,7 @@
+{
+    "name": "example-project",
+    "workspaces": [
+        "server",
+        "ui"
+    ]
+}
