@@ -21,7 +21,9 @@ import {
 } from 'lodash/fp';
 import { Command as TauriCommand } from '@tauri-apps/plugin-shell';
 import { mapAsync } from 'moredash';
-import { resolve } from '@tauri-apps/api/path';
+import { resolve, appLocalDataDir } from '@tauri-apps/api/path';
+import type { FileHandle } from '@tauri-apps/plugin-fs';
+import { mkdir, open } from '@tauri-apps/plugin-fs';
 import type {
   Action, CommandCache, CommandCacheMap, Dispatch,
 } from './Context';
@@ -31,6 +33,39 @@ import type { ProjectCommand } from '../../domain/project/models/Command';
 import { useProject } from '../ProjectProvider';
 
 export type CommandProviderProps = PropsWithChildren<{}>;
+
+const utf8 = new TextEncoder();
+const createLogger = (file: FileHandle) => (line: string) => {
+  file.write(utf8.encode(line));
+};
+
+const stopLogging = async (
+  command: CommandCache,
+) => {
+  if (command) {
+    await command.logFile.close();
+  }
+};
+
+const initializeLogFile = async (
+  path: string,
+  command: CommandCache,
+) => {
+  const logLocation = await resolve(await appLocalDataDir(), 'command-logs');
+  const logFileName = await resolve(logLocation, `${path}.log`);
+  await mkdir(logLocation, { recursive: true });
+  const logFile = await open(
+    logFileName,
+    { append: true, create: true },
+  );
+
+  command.cmd.on('error', createLogger(logFile));
+  command.cmd.stdout.on('data', createLogger(logFile));
+  command.cmd.stderr.on('data', createLogger(logFile));
+
+  // eslint-disable-next-line no-param-reassign -- internal use
+  command.logLocation = logFileName;
+};
 
 const hashCommand = (
   path: string,
@@ -44,23 +79,19 @@ const buildCommand = async (
 ): Promise<CommandCache> => {
   const cmdBits = castArray(cmd.command);
 
-  console.log(cwd, cmd.workingDirectory);
-
   const tauriCmd = TauriCommand.create(
     cmdBits[0],
     drop(1, cmdBits),
     { cwd: await resolve(cwd, cmd.workingDirectory ?? '.') },
   );
 
-  tauriCmd.on('error', console.error);
-  tauriCmd.stdout.on('data', console.log);
-  tauriCmd.stderr.on('data', console.warn);
-
   return {
     hash: hashCommand(path, cmd),
     cmd: tauriCmd,
     pid: null,
     exitCode: null,
+    logFile: null!,
+    logLocation: '',
     start: () => tauriCmd.spawn(),
     stop: constant(Promise.resolve()),
   };
@@ -105,6 +136,7 @@ const reducer = async (current: CommandCacheMap, action: Action) => {
 
   switch (action.kind) {
     case 'start': {
+      console.trace('start', { action });
       const newCmd = { ...current[action.path]! };
       const child = await newCmd.start();
       newCmd.pid = child.pid;
@@ -113,6 +145,7 @@ const reducer = async (current: CommandCacheMap, action: Action) => {
       return newMap;
     }
     case 'stop': {
+      console.trace('stop', { action });
       const newCmd = { ...current[action.path]! };
       await newCmd.stop();
       newCmd.exitCode = action.terminated?.code ?? 0;
@@ -122,12 +155,17 @@ const reducer = async (current: CommandCacheMap, action: Action) => {
       return newMap;
     }
     case 'set': {
+      console.trace('set', { action });
       const existing = current[action.path];
       if (existing?.hash !== action.cmd.hash) {
-        if (existing) {
+        await stopLogging(existing);
+        if (existing?.stop) {
+          console.trace('stopping command');
           await existing.stop();
         }
         newMap[action.path] = action.cmd;
+        await initializeLogFile(action.path, newMap[action.path]);
+
         return newMap;
       }
       return current;
@@ -151,7 +189,10 @@ const CommandProvider = ({
 
       if (cmdRef?.cmd && action.kind === 'start') {
         cmdRef.cmd.removeAllListeners('close');
-        cmdRef.cmd.on('close', (terminated) => dispatch({ kind: 'stop', path: action.path, terminated }));
+        cmdRef.cmd.on('close', (terminated) => {
+          console.trace('stopping because closed', { terminated });
+          dispatch({ kind: 'stop', path: action.path, terminated });
+        });
       }
 
       commandsRef.current = await reducer(commandsRef.current, action);

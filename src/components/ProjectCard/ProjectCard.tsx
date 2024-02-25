@@ -1,17 +1,17 @@
 import {
-  Avatar,
   Button,
   Card,
   CardActions,
   CardContent,
-  CardHeader,
 } from '@mui/material';
 import {
-  first, size,
+  size,
 } from 'lodash/fp';
+import { useNavigate } from 'react-router-dom';
+import { useCallback } from 'react';
 import type { Project } from '../../domain/project/models/Project';
-import ProjectStatusIcon from '../ProjectStatusIcon';
-import { useCommand } from '../CommandProvider/Context';
+import { useCommand } from '../CommandProvider';
+import ProjectCardHeader from './ProjectCardHeader';
 
 export type ProjectCardProps = {
   project: Project,
@@ -22,18 +22,19 @@ const ProjectCard = ({
 }: ProjectCardProps) => {
   const startCmd = useCommand(project, 'start');
 
+  const navigate = useNavigate();
+  const gotoProject = useCallback(
+    () => {
+      navigate(`/project/${project.name}`);
+    },
+    [navigate, project.name],
+  );
+
   return (
     <Card>
-      <CardHeader
-        avatar={(
-          <Avatar>
-            {first(project.name)}
-          </Avatar>
-        )}
-        title={project.name}
-        action={
-          <ProjectStatusIcon project={project} />
-        }
+      <ProjectCardHeader
+        project={project}
+        onClick={gotoProject}
       />
       <CardContent>
         commands:

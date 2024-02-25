@@ -5,19 +5,26 @@ export type LayoutProps = PropsWithChildren<{}>;
 
 const Layout = ({
   children,
-}: LayoutProps) => {
-  console.log('TODO: Implement Layout');
-  return (
-    <>
-      <GlobalStyles styles={{
-        html: {
-          backgroundColor: '#E0E0E0',
-        },
-      }}
-      />
-      {children}
-    </>
-  );
-};
+}: LayoutProps) => (
+  <>
+    <GlobalStyles styles={{
+      'html, body, #root': {
+        margin: 0,
+        minHeight: '100vh',
+        height: '100vh',
+      },
+      html: {
+        backgroundColor: '#E0E0E0',
+      },
+      '#root': {
+        display: 'flex',
+        flexDirection: 'column',
+        flexWrap: 'nowrap',
+      },
+    }}
+    />
+    {children}
+  </>
+);
 
 export default Layout;

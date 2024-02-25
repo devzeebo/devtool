@@ -5,7 +5,7 @@ import { drop, find } from 'lodash/fp';
 import { useMemo } from 'react';
 import type { Project } from '../../domain/project/models/Project';
 import type { CommandHook } from '../CommandProvider/Context';
-import { useCommand } from '../CommandProvider/Context';
+import { useCommand } from '../CommandProvider';
 
 export type ProjectStatusIconProps = {
   project: Project,

@@ -17,6 +17,18 @@
     "shell:allow-execute",
     "shell:allow-kill",
     {
+      "identifier": "fs:scope",
+      "allow": [
+        {
+          "path": "$APPLOCALDATA/**/*"
+        }
+      ]
+    },
+    "fs:allow-mkdir",
+    "fs:allow-open",
+    "fs:allow-read",
+    "fs:allow-write",
+    {
       "identifier": "fs:allow-read-text-file",
       "allow": [
         {
